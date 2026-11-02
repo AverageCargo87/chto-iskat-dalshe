@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#23594a">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Что искать дальше</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex,nofollow">
+<style>
+/* Один вопрос на экран: ответы внизу, под большим пальцем. Системные шрифты, чтобы ничего не грузить из сети. */
+:root{
+  --bg:#ffffff; --surface:#eef3ef; --surface-2:#dfe7e1; --line:#c9d4cc;
+  --ink:#16211b; --muted:#56645c; --accent:#23594a; --on-accent:#ffffff; --accent-soft:#d8eadf;
+  --warn:#9a4316; --warn-soft:#f7e7dc;
+  --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1512; --surface:#1a231e; --surface-2:#26312b; --line:#35433b;
+  --ink:#e8eee9; --muted:#a2b0a7; --accent:#86cfae; --on-accent:#0f1512; --accent-soft:#20372d;
+  --warn:#eba06e; --warn-soft:#37251b; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --surface:#1a231e; --surface-2:#26312b; --line:#35433b;
+  --ink:#e8eee9; --muted:#a2b0a7; --accent:#86cfae; --on-accent:#0f1512; --accent-soft:#20372d;
+  --warn:#eba06e; --warn-soft:#37251b; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.45;
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#app{min-height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 22px}
+h1,h2,h3,p,ul,ol{margin:0}
+h1,h2{font-family:var(--serif);font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.focus-target:focus{outline:none}
+
+/* вступление */
+.intro{flex:1;display:flex;flex-direction:column;gap:18px;padding-top:12px}
+.intro h1{font-size:clamp(34px,10vw,44px);line-height:1.08}
+.lede{font-size:18px;color:var(--muted)}
+.gets{list-style:none;padding:0;display:grid;gap:12px;background:var(--surface);border-radius:10px;padding:16px}
+.gets li{display:grid;grid-template-columns:30px 1fr;gap:8px;align-items:baseline}
+.gets b{font-family:var(--serif);font-size:21px;color:var(--accent);font-weight:600}
+.small{font-size:14px;color:var(--muted)}
+.actions{margin-top:auto;display:grid;gap:10px;padding-top:10px}
+
+/* кнопки */
+.primary,.ghost,.answer{width:100%;min-height:56px;border-radius:10px;padding:13px 16px;text-align:center;font-weight:600}
+.primary{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent)}
+.ghost{background:transparent;border:1px solid var(--line);font-weight:500}
+.primary:disabled{opacity:.45;cursor:default}
+
+/* вопрос */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px}
+.back{background:none;border:0;padding:10px 12px 10px 0;color:var(--muted);font-size:15px;min-height:44px}
+.count{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.track{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .2s ease}
+.qbox{flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px;padding-block:22px}
+.kick{font-size:15px;color:var(--muted)}
+.q{font-size:clamp(25px,7vw,31px);line-height:1.18}
+.hint{font-size:15px;color:var(--muted)}
+.answers{display:grid;gap:9px}
+.answer{background:var(--surface);border:1px solid var(--line);font-weight:500;transition:background .1s,color .1s}
+.answer.big{min-height:84px;font-size:18px;line-height:1.3}
+.answer.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.answer[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.or{text-align:center;font-size:14px;color:var(--muted)}
+.next{margin-top:6px}
+
+/* результат */
+.result{display:grid;gap:28px;padding-top:6px}
+.hero{background:var(--accent);color:var(--on-accent);border-radius:12px;padding:20px 18px}
+.hero .label{font-size:14px;opacity:.85}
+.hero h1{font-size:clamp(28px,8vw,34px);line-height:1.12;margin-top:6px}
+.hero p{margin-top:10px;font-size:16px}
+.block{display:grid;gap:12px}
+.block h2{font-size:23px;line-height:1.2}
+.lead{color:var(--muted);font-size:15.5px}
+details.dir{border:1px solid var(--line);border-radius:10px;min-width:0}
+details.dir summary{list-style:none;cursor:pointer;padding:15px 44px 15px 16px;position:relative;font-weight:600;font-size:18px;line-height:1.25;min-height:56px}
+details.dir summary::-webkit-details-marker{display:none}
+details.dir summary::after{content:"+";position:absolute;right:16px;top:12px;font-size:24px;font-weight:400;color:var(--muted)}
+details.dir[open] summary::after{content:"–"}
+details.dir summary small{display:block;font-weight:400;font-size:14px;color:var(--muted);margin-top:2px}
+.dirbody{padding:0 16px 16px;display:grid;gap:15px}
+.part h3{font-size:13px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+.part ul{padding-left:19px;display:grid;gap:4px}
+.warn{background:var(--warn-soft);border-radius:8px;padding:11px 13px;font-size:15.5px}
+.warn b{color:var(--warn)}
+.links{display:grid;gap:8px}
+.links a{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;padding:10px 13px;background:var(--surface);border-radius:8px;text-decoration:none;font-weight:500;line-height:1.25}
+.links a span{color:var(--accent);flex:none}
+.tags{display:grid;gap:10px}
+.tag{background:var(--surface);border-radius:10px;padding:14px 15px}
+.tag.w{background:var(--warn-soft)}
+.tag h3{font-size:17px}
+.tag p{font-size:15px;color:var(--muted);margin:2px 0 7px}
+.tag ul{padding-left:19px;display:grid;gap:3px;font-size:16px}
+.steps{padding-left:22px;display:grid;gap:9px}
+.out{width:100%;min-height:220px;font:14px/1.45 var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px}
+.foot{font-size:13.5px;color:var(--muted)}
+@media (max-height:640px){
+  .qbox{padding-block:12px}
+  .answers{gap:7px}
+  .answer{min-height:48px;padding-block:10px}
+  .answer.big{min-height:72px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<main id="app"></main>
+
+<script id="logic">
+/* Вопросы, направления и расчёт. Без обращения к странице, чтобы проверять отдельно. */
+const OUTCOMES = {
+  core:{t:"Получается и нравится",v:1},
+  trap:{t:"Получается, но утомляет",v:.35},
+  grow:{t:"Нравится, но пока мало опыта",v:.6},
+  drop:{t:"Не моё",v:-.4},
+  none:{t:"Не пробовала",v:.1}
+};
+
+/* s — как назвать в списке результата, proof — что подтверждается резюме */
+const EXP = [
+  {k:"pm",q:"Вести проект: сроки, задачи, люди",s:"вести проекты",proof:"год работы проектным менеджером"},
+  {k:"process",q:"Разбираться, как устроена работа, и искать, что упростить",s:"разбираться в процессах и упрощать их",proof:"задачи школы, которые ты приносила, проверяла и внедряла"},
+  {k:"adopt",q:"Внедрять новое: объяснять людям, проверять, собирать замечания",s:"внедрять новое вместе с людьми",proof:"работа специалистом по внедрению ИИ в школе"},
+  {k:"ai",q:"Работать с нейросетями и ИИ-инструментами",s:"работать с ИИ-инструментами",proof:"практика с ИИ-инструментами и магистратура по ИИ"},
+  {k:"research",q:"Проводить исследования: анкеты, интервью, контент-анализ",s:"проводить исследования",proof:"диплом по социологии и исследовательские проекты, включая контент-анализ СМИ"},
+  {k:"data",q:"Считать и разбирать данные: таблицы, Python",s:"разбирать данные",proof:"курс по анализу данных на Python"},
+  {k:"write",q:"Писать: научные тексты, отчёты, статьи",s:"писать тексты",proof:"диплом, курсовые и научное письмо"},
+  {k:"content",q:"Делать контент: соцсети, монтаж, Photoshop",s:"делать контент",proof:"опыт SMM-специалиста, сообщество факультета, монтаж и Photoshop"},
+  {k:"speak",q:"Выступать: лекции, мастер-классы, ведение мероприятий",s:"выступать перед людьми",proof:"лекции и мастер-классы в школах и вузах, ведение мероприятий"},
+  {k:"mentor",q:"Быть наставником: помогать новичкам разобраться",s:"быть наставником",proof:"опыт координатора и наставника в программе для студентов"},
+  {k:"talk",q:"Договариваться: переговоры, нетворкинг, работа в студсовете",s:"договариваться",proof:"студсовет, профком, переговоры и нетворкинг"},
+  {k:"docs",q:"Вести документы: протоколы, служебки, отчётность",s:"вести документы",proof:"опыт ответственного секретаря студсовета"}
+];
+
+const TYPES = {
+  I:"исследовать и разбираться", C:"наводить порядок", S:"помогать людям",
+  A:"придумывать и создавать", E:"вести людей за собой", R:"настраивать сервисы"
+};
+
+/* Каждый тип встречается ровно с каждым другим один раз: по 5 раз, всего 15 пар */
+const PAIRS = [
+  [["Выяснить, почему люди поступают именно так","I"],["Навести порядок там, где у всех хаос","C"]],
+  [["Разобрать результаты опроса и найти закономерность","I"],["Помочь новичку освоиться на новом месте","S"]],
+  [["Прочитать исследования и сравнить выводы","I"],["Придумать, как подать идею ярко и понятно","A"]],
+  [["Долго разбираться в одной сложной теме","I"],["Быстро решить и повести команду за собой","E"]],
+  [["Понять, почему что-то сломалось","I"],["Настроить сервис, чтобы всё заработало","R"]],
+  [["Составить чёткий план и таблицу сроков","C"],["Поговорить с человеком и понять, что ему нужно","S"]],
+  [["Довести документ до идеального порядка","C"],["Сделать пост, ролик или презентацию с нуля","A"]],
+  [["Следить, чтобы ничего не потерялось","C"],["Договориться с партнёром о сложном решении","E"]],
+  [["Написать понятную инструкцию","C"],["Собрать рабочую автоматизацию","R"]],
+  [["Провести занятие для группы","S"],["Придумать формат занятия и оформить его","A"]],
+  [["Поддержать человека, когда ему трудно","S"],["Убедить руководство запустить новый проект","E"]],
+  [["Обучить коллег новому инструменту","S"],["Разобраться в инструменте глубже всех","R"]],
+  [["Написать текст, который захотят дочитать","A"],["Выступить и зажечь людей идеей","E"]],
+  [["Смонтировать видео или собрать дизайн","A"],["Подключить сервисы друг к другу","R"]],
+  [["Отвечать за результат всего проекта","E"],["Сделать свою часть технически безупречно","R"]]
+];
+
+const COND = [
+  {id:"hours",q:"Сколько времени можешь работать, если совмещать с учёбой?",o:[["full","Полный день"],["part","4–6 часов в день"],["few","2–3 дня в неделю"],["project","Только проекты без графика"]]},
+  {id:"speed",q:"Как быстро нужна новая работа?",o:[["asap","Чем скорее, тем лучше"],["soon","В ближайшие 1–2 месяца"],["calm","Могу искать спокойно"]]},
+  {id:"format",q:"Какой формат удобнее?",o:[["remote","Удалённо"],["hybrid","Гибрид"],["office","Офис"],["any","Без разницы"]]},
+  {id:"sphere",q:"Где хочется работать?",o:[["edu","Образование"],["it","IT и цифровые продукты"],["gov","Госсектор и НКО"],["science","Наука и исследования"],["any","Пока без разницы"]]},
+  {id:"value",q:"Что сейчас важнее всего?",o:[["growth","Рост в профессии"],["money","Хорошая зарплата"],["meaning","Смысл и польза людям"],["flex","Гибкий график, чтобы совмещать с учёбой"]]}
+];
+
+const ANTI = {
+  sales:{t:"Продажи и холодные звонки",w:"Слово «менеджер» часто скрывает продажи. Читай обязанности, прежде чем откликаться."},
+  speak:{t:"Публичные выступления",w:"здесь бывает много выступлений"},
+  docs:{t:"Бумажная рутина",w:"здесь много документов и рутины"},
+  people:{t:"Много общения весь день",w:"здесь почти весь день общение"},
+  code:{t:"Программирование и настройка сервисов",w:"здесь придётся настраивать сервисы или писать код"},
+  office:{t:"Жёсткий офисный график",w:"такие вакансии часто только в офисе"}
+};
+const ANTI_MAX = 3;
+
+const hh = q => "https://hh.ru/search/vacancy?text=" + encodeURIComponent(q) + "&area=1&search_field=name";
+
+/* w — близость к типам; need — навыки и их вес; speed: 0 — можно откликаться сразу, 2 — нужна подготовка;
+   flex: 0 — обычно полный день, 2 — часто бывает неполная занятость или проекты */
+const DIRS = [
+  {id:"pm",t:"Проектный менеджер",what:"Вести проект: сроки, задачи и договорённости между людьми.",
+   w:{E:3,C:3,S:1},need:{pm:3,talk:2,process:1,docs:1},sphere:["it","edu","gov"],speed:0,flex:0,anti:{people:.05,docs:.04},
+   where:"IT-компании, агентства, онлайн-школы, НКО",
+   q:["проектный менеджер","junior project manager","координатор проектов","ассистент проектного менеджера"],
+   gap:"Для каждого проекта напиши в резюме, что запускала, с кем и что изменилось."},
+  {id:"ai",t:"Внедрение ИИ и автоматизация",what:"Находить рутину в компании, подбирать инструмент и запускать его вместе с командой.",
+   w:{R:3,C:2,E:2,I:1},need:{ai:3,process:3,adopt:3,data:1},sphere:["it","edu"],speed:1,flex:1,anti:{code:.1},
+   where:"Средний бизнес, онлайн-школы, консалтинг, отделы цифровизации",
+   q:["специалист по внедрению ИИ","специалист по автоматизации","менеджер по внедрению","специалист по внедрению"],
+   gap:"На собеседовании спросят, что ты сделала сама. Рассказывай о своей роли как есть: приносила задачу, знала контекст школы, проверяла и внедряла. Разберись в одной автоматизации так, чтобы объяснить её своими словами."},
+  {id:"ux",t:"Исследователь пользователей",what:"Говорить с пользователями и выяснять, почему они поступают так, а не иначе. Методы те же, что в социологии, но для цифрового продукта.",
+   w:{I:3,S:2,A:1},need:{research:3,talk:1,write:1},sphere:["it","edu"],speed:1,flex:1,anti:{people:.03},
+   where:"Продуктовые IT-компании, банки, маркетплейсы, онлайн-школы",
+   q:["UX-исследователь","UX researcher","исследователь пользовательского опыта","CX исследователь"],
+   gap:"Нужен хотя бы один кейс про продукт: несколько интервью, выводы и рекомендации."},
+  {id:"soc",t:"Социолог-исследователь",what:"Опросы, фокус-группы, контент-анализ и отчёты для заказчиков.",
+   w:{I:3,C:1,A:1},need:{research:3,write:2,data:1},sphere:["science","gov"],speed:0,flex:2,anti:{},
+   where:"Исследовательские агентства, аналитические центры, вузы, госструктуры",
+   q:["аналитик исследований","маркетинговые исследования","специалист по маркетинговым исследованиям","социолог"],
+   gap:"Собери два своих исследования в короткое портфолио: вопрос, метод, вывод."},
+  {id:"da",t:"Младший аналитик данных",what:"Собирать данные, считать и объяснять, что из них следует.",
+   w:{I:3,C:2,R:2},need:{data:3,research:1},sphere:["it","gov"],speed:2,flex:1,anti:{code:.14},
+   where:"IT-компании, банки, ритейл",
+   q:["младший аналитик","стажер аналитик","младший аналитик данных","стажёр аналитик данных"],
+   gap:"Почти везде просят SQL и уверенный Excel. Сначала освой их, потом откликайся."},
+  {id:"content",t:"SMM и контент",what:"Вести соцсети, писать тексты, делать видео и картинки.",
+   w:{A:3,E:1,S:1},need:{content:3,write:2},sphere:["edu","it","gov"],speed:0,flex:2,anti:{},
+   where:"Онлайн-школы, вузы, НКО, бренды, агентства",
+   q:["SMM-специалист","контент-менеджер","SMM-менеджер","менеджер по контенту"],
+   gap:"Покажи две-три работы со ссылками. Если сохранились цифры охвата, добавь их."},
+  {id:"edu",t:"Образовательные программы",what:"Запускать программы для школьников, студентов или взрослых: набор, расписание, кураторы, обратная связь.",
+   w:{S:3,C:2,A:1,E:1},need:{mentor:2,pm:2,speak:1,talk:1},sphere:["edu"],speed:0,flex:1,anti:{speak:.04,people:.05},
+   where:"Вузы, онлайн-школы, детские проекты, корпоративные университеты",
+   q:["менеджер образовательных программ","менеджер образовательных проектов","куратор онлайн-школы","методист"],
+   gap:"Опиши наставничество и лекции как отдельные проекты: для кого, сколько человек, что получилось."},
+  {id:"hr",t:"HR и обучение сотрудников",what:"Помогать компании находить людей, вводить их в работу и обучать.",
+   w:{S:3,E:2,C:1},need:{talk:2,mentor:2,speak:1,docs:1},sphere:["it","edu","gov"],speed:1,flex:0,anti:{people:.1,speak:.03,office:.03},
+   where:"Средние и крупные компании",
+   q:["младший HR менеджер","HR ассистент","специалист по обучению персонала","специалист по внутренним коммуникациям"],
+   gap:"Опыта подбора и корпоративного обучения в резюме пока нет. Начинай с позиций ассистента."},
+  {id:"youth",t:"Молодёжные и общественные проекты",what:"Программы для молодёжи, форумы, гранты, волонтёрство.",
+   w:{E:3,S:2,C:1},need:{talk:3,pm:1,speak:1,mentor:1},sphere:["gov"],speed:0,flex:1,anti:{speak:.06,people:.07},
+   where:"НКО, фонды, университеты, городские и федеральные молодёжные программы",
+   q:["организатор мероприятий","координатор программ","специалист по работе с молодежью","координатор волонтеров"],
+   gap:"Собери волонтёрство и студсовет в один рассказ о том, как ты организуешь людей."},
+  {id:"assist",t:"Ассистент руководителя",what:"Правая рука руководителя: документы, встречи, поручения.",
+   w:{C:3,S:1,E:1},need:{docs:3,talk:1,process:1},sphere:["it","edu","gov"],speed:0,flex:0,anti:{docs:.16,office:.06,people:.03},
+   where:"Компании любого размера",
+   q:["ассистент руководителя","бизнес-ассистент","помощник руководителя","административный координатор"],
+   gap:"Здесь можно выйти на работу быстрее всего. Рост сильно зависит от руководителя, поэтому о задачах договаривайся заранее."}
+];
+
+const QUESTIONS = [
+  ...EXP.map(e => ({id:"e_" + e.k,kind:"exp",sec:"Опыт",kick:"Как тебе это делать?",q:e.q})),
+  ...PAIRS.map((p,i) => ({id:"p_" + i,kind:"pair",sec:"Что ближе",kick:"Что бы ты выбрала?",a:p[0][0],b:p[1][0]})),
+  ...COND.map(c => ({id:"c_" + c.id,kind:"cond",sec:"Условия",q:c.q,o:c.o})),
+  {id:"anti",kind:"anti",sec:"Условия",q:"Чего точно не хочешь?",hint:"Выбери до трёх пунктов или пропусти."}
+];
+
+/* Среднее и разброс оценки на случайных ответах (calibrate.js): уравнивают направления с разным числом навыков */
+const CAL = {"pm":[0.386,0.182],"ai":[0.389,0.161],"ux":[0.402,0.189],"soc":[0.521,0.185],"da":[0.349,0.233],"content":[0.529,0.206],"edu":[0.404,0.159],"hr":[0.294,0.177],"youth":[0.39,0.176],"assist":[0.302,0.217]};
+
+function typeScores(a){
+  const s = {I:0,C:0,S:0,A:0,E:0,R:0};
+  PAIRS.forEach((p,i) => {
+    const c = a["p_" + i];
+    if(c === "a") s[p[0][1]]++;
+    if(c === "b") s[p[1][1]]++;
+  });
+  return s;
+}
+
+function topTypes(s){
+  return Object.keys(s).sort((x,y) => s[y] - s[x] || x.localeCompare(y)).slice(0,2);
+}
+
+function skillGroups(a){
+  const g = {core:[],trap:[],grow:[],drop:[],none:[]};
+  EXP.forEach(e => {
+    const v = a["e_" + e.k];
+    if(g[v]) g[v].push(e);
+  });
+  return g;
+}
+
+function scoreDir(d,a,ts){
+  let tSum = 0, tTot = 0;
+  Object.entries(d.w).forEach(([k,w]) => {tSum += w * ts[k]; tTot += w * 5;});
+  const typeFit = tSum / tTot;
+
+  let kSum = 0, kTot = 0;
+  Object.entries(d.need).forEach(([k,w]) => {
+    const o = OUTCOMES[a["e_" + k]];
+    kTot += w;
+    if(o) kSum += w * o.v;
+  });
+  const skillFit = kSum / kTot;
+
+  let m = .45 * typeFit + .55 * skillFit;
+  const c = id => a["c_" + id];
+
+  if(c("sphere") && c("sphere") !== "any") m += d.sphere.includes(c("sphere")) ? .08 : -.02;
+
+  if(c("speed") === "asap") m += [.08,-.02,-.1][d.speed];
+  if(c("speed") === "soon") m += [.03,0,-.04][d.speed];
+  if(c("speed") === "calm" && d.speed === 2) m += .03;
+
+  if(c("hours") === "part") m += [-.05,0,.01][d.flex];
+  if(c("hours") === "few") m += [-.12,-.04,.03][d.flex];
+  if(c("hours") === "project") m += [-.2,-.08,.06][d.flex];
+
+  if(c("format") === "remote") m += {assist:-.06,hr:-.03,youth:-.03,edu:-.02}[d.id] || 0;
+
+  if(c("value") === "growth" && ["ai","ux","da","pm"].includes(d.id)) m += .04;
+  if(c("value") === "money" && ["pm","ai","da"].includes(d.id)) m += .04;
+  if(c("value") === "meaning" && ["edu","youth","soc"].includes(d.id)) m += .05;
+  if(c("value") === "flex") m += d.flex * .03;
+
+  const anti = a.anti || [];
+  anti.forEach(k => {m -= d.anti[k] || 0;});
+  return m;
+}
+
+const SPHERE_NAME = {edu:"образование",it:"IT и цифровые продукты",gov:"госсектор и НКО",science:"наука и исследования"};
+
+function explain(d,a,ts){
+  const liked = [], tiring = [], tiringMain = [], toLearn = [], have = [];
+  Object.keys(d.need).forEach(k => {
+    const e = EXP.find(x => x.k === k), v = a["e_" + k];
+    if(v === "core"){liked.push(e.s); have.push(e.proof);}
+    if(v === "trap"){(d.need[k] >= 2 ? tiringMain : tiring).push(e.s); have.push(e.proof);}
+    if(v === "grow" || v === "none") toLearn.push(e.s);
+  });
+
+  const why = [];
+  if(liked.length) why.push("Тебе нравится и получается " + liked.join(", ") + ".");
+  const shared = topTypes(ts).filter(t => (d.w[t] || 0) >= 2).map(t => TYPES[t]);
+  if(shared.length) why.push("Это совпадает с тем, что тебе ближе всего: " + shared.join(", ") + ".");
+  if(a.c_sphere && a.c_sphere !== "any" && d.sphere.includes(a.c_sphere)){
+    why.push("Подходит под выбранную сферу: " + SPHERE_NAME[a.c_sphere] + ".");
+  }
+  if(d.speed === 0 && a.c_speed === "asap") why.push("Можно откликаться уже сейчас, долгая подготовка не нужна.");
+  if(!why.length) why.push("Это ближайший вариант по сумме твоих ответов, но явного совпадения здесь нет.");
+
+  const warn = [];
+  if(tiringMain.length) warn.push("Тебе это хорошо удаётся, но утомляет: " + tiringMain.join(", ") + ". Здесь этого будет много.");
+  if(tiring.length) warn.push("Утомляет, но здесь тоже встретится: " + tiring.join(", ") + ".");
+  (a.anti || []).forEach(k => {if(d.anti[k]) warn.push("Ты отметила, что не хочешь этого, а " + ANTI[k].w + ".");});
+  if(d.flex === 0 && ["few","project"].includes(a.c_hours)) warn.push("Такие вакансии редко бывают на неполный день. Спрашивай про график сразу.");
+  if(d.speed === 2 && a.c_speed === "asap") warn.push("Сюда нужна подготовка, быстро выйти не получится.");
+  return {why,warn,have,toLearn};
+}
+
+function computeResult(a){
+  const ts = typeScores(a);
+  const ranked = DIRS.map(d => ({d,score:(scoreDir(d,a,ts) - CAL[d.id][0]) / CAL[d.id][1]})).sort((x,y) => y.score - x.score || x.d.id.localeCompare(y.d.id));
+  const top = ranked.slice(0,3).map(r => ({...r.d,score:r.score,...explain(r.d,a,ts)}));
+  return {ts,top,types:topTypes(ts).map(t => TYPES[t]),groups:skillGroups(a),anti:a.anti || []};
+}
+
+function buildReport(r){
+  const L = ["Что искать дальше: мой результат",""];
+  L.push("Ближе всего: " + r.types.join(", "),"");
+  r.top.forEach((d,i) => {
+    L.push((i + 1) + ". " + d.t,d.what,"Почему: " + d.why.join(" "));
+    if(d.warn.length) L.push("На что смотреть: " + d.warn.join(" "));
+    L.push("Искать: " + d.q.join(", "),"С чего начать. " + d.gap,"");
+  });
+  const list = (title,arr) => {if(arr.length) L.push(title + ": " + arr.map(e => e.s).join(", "));};
+  list("Получается и нравится",r.groups.core);
+  list("Получается, но утомляет",r.groups.trap);
+  list("Нравится, но пока мало опыта",r.groups.grow);
+  list("Не моё",r.groups.drop);
+  if(r.anti.length) L.push("Не хочу: " + r.anti.map(k => ANTI[k].t.toLowerCase()).join(", "));
+  return L.join("\n");
+}
+
+if(typeof module !== "undefined") module.exports = {OUTCOMES,EXP,TYPES,PAIRS,COND,ANTI,ANTI_MAX,DIRS,QUESTIONS,computeResult,buildReport,scoreDir,typeScores,hh};
+</script>
+
+<script>
+const KEY = "chto-iskat-dalshe-v2";
+const app = document.getElementById("app");
+let S = {i:-1,a:{}};
+let busy = false;
+let resetAt = 0;
+let lockUntil = 0;
+
+try{
+  const raw = localStorage.getItem(KEY);
+  if(raw){
+    const p = JSON.parse(raw);
+    if(p && Number.isInteger(p.i) && p.a && typeof p.a === "object"){
+      S = p;
+      if(!Array.isArray(S.a.anti)) delete S.a.anti;
+    }
+  }
+}catch(e){}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const esc = s => String(s).replace(/[&<>"]/g,c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function show(html){
+  app.innerHTML = html;
+  resetAt = 0;
+  lockUntil = performance.now() + 350; // второе касание двойного нажатия не должно попасть в новый экран
+  window.scrollTo(0,0);
+  const f = app.querySelector(".focus-target");
+  if(f) f.focus({preventScroll:true});
+}
+
+function intro(){
+  show(`<div class="intro">
+    <h1 class="focus-target" tabindex="-1">Что искать дальше</h1>
+    <p class="lede">Отвечай кнопками, без долгих раздумий. В конце увидишь, какая работа может подойти и что искать на hh.</p>
+    <ul class="gets">
+      <li><b>3</b><span>подходящих направления, и почему именно они</span></li>
+      <li><b>hh</b><span>готовые запросы: нажала и сразу видишь вакансии</span></li>
+      <li><b>${QUESTIONS.length}</b><span>вопроса, это 5–7 минут</span></li>
+    </ul>
+    <p class="small">Ответы хранятся только на этом телефоне. Страница сама ничего никуда не отправляет.</p>
+    <div class="actions">
+      <button class="primary" data-act="start">Начать</button>
+    </div>
+  </div>`);
+}
+
+function head(q){
+  const n = S.i + 1, total = QUESTIONS.length;
+  return `<div class="top">
+      <button class="back" data-act="back">‹ Назад</button>
+      <span class="count">${n} из ${total}</span>
+      ${S.a[q.id] != null && q.kind !== "anti" ? '<button class="back" data-act="skip">Дальше ›</button>' : ""}
+    </div>
+    <div class="track" role="progressbar" aria-label="Пройдено вопросов" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${S.i}"><i style="width:${Math.round(S.i / total * 100)}%"></i></div>`;
+}
+
+function question(){
+  const q = QUESTIONS[S.i], cur = S.a[q.id];
+  let body = "";
+  if(q.kind === "exp"){
+    body = `<div class="qbox"><p class="kick">${esc(q.kick)}</p><h1 class="q focus-target" tabindex="-1">${esc(q.q)}</h1></div>
+      <div class="answers">${Object.entries(OUTCOMES).map(([k,o]) =>
+        `<button class="answer${cur === k ? " on" : ""}" data-ans="${k}">${esc(o.t)}</button>`).join("")}</div>`;
+  }
+  if(q.kind === "pair"){
+    body = `<div class="qbox"><h1 class="q focus-target" tabindex="-1">${esc(q.kick)}</h1></div>
+      <div class="answers">
+        <button class="answer big${cur === "a" ? " on" : ""}" data-ans="a">${esc(q.a)}</button>
+        <p class="or">или</p>
+        <button class="answer big${cur === "b" ? " on" : ""}" data-ans="b">${esc(q.b)}</button>
+      </div>`;
+  }
+  if(q.kind === "cond"){
+    body = `<div class="qbox"><h1 class="q focus-target" tabindex="-1">${esc(q.q)}</h1></div>
+      <div class="answers">${q.o.map(([k,t]) =>
+        `<button class="answer${cur === k ? " on" : ""}" data-ans="${k}">${esc(t)}</button>`).join("")}</div>`;
+  }
+  if(q.kind === "anti"){
+    const sel = S.a.anti || [];
+    body = `<div class="qbox"><h1 class="q focus-target" tabindex="-1">${esc(q.q)}</h1><p class="hint" id="antiHint">${esc(q.hint)}</p></div>
+      <div class="answers">${Object.entries(ANTI).map(([k,o]) =>
+        `<button class="answer" data-anti="${k}" aria-pressed="${sel.includes(k)}">${esc(o.t)}</button>`).join("")}
+        <button class="primary next" data-act="finish">Показать результат</button></div>`;
+  }
+  show(head(q) + body);
+}
+
+function choose(btn,value){
+  if(busy) return;
+  busy = true;
+  const q = QUESTIONS[S.i];
+  S.a[q.id] = value;
+  app.querySelectorAll("[data-ans]").forEach(b => b.classList.toggle("on",b === btn));
+  setTimeout(() => {
+    S.i++;
+    save();
+    busy = false;
+    question();
+  },170);
+}
+
+function toggleAnti(btn){
+  const k = btn.dataset.anti, sel = S.a.anti || [];
+  const hint = document.getElementById("antiHint");
+  if(sel.includes(k)){
+    S.a.anti = sel.filter(x => x !== k);
+  }else if(sel.length >= ANTI_MAX){
+    hint.textContent = "Можно выбрать только три. Сними один пункт, чтобы выбрать другой.";
+    return;
+  }else{
+    S.a.anti = sel.concat(k);
+  }
+  hint.textContent = QUESTIONS[S.i].hint;
+  btn.setAttribute("aria-pressed",String(S.a.anti.includes(k)));
+  save();
+}
+
+function dirCard(d,i){
+  const part = (t,html) => `<div class="part"><h3>${t}</h3>${html}</div>`;
+  const ul = arr => `<ul>${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
+  return `<details class="dir"${i === 0 ? " open" : ""}>
+    <summary>${i + 1}. ${esc(d.t)}<small>${esc(d.where)}</small></summary>
+    <div class="dirbody">
+      <p>${esc(d.what)}</p>
+      ${part("Почему тебе",ul(d.why))}
+      ${d.warn.length ? `<div class="warn"><b>На что смотреть.</b> ${esc(d.warn.join(" "))}</div>` : ""}
+      ${part("Смотреть вакансии",`<div class="links">${d.q.map(q => `<a href="${esc(hh(q))}" target="_blank" rel="noopener">${esc(q)}<span>↗</span></a>`).join("")}</div>`)}
+      ${d.have.length ? part("Что можно показать из твоего опыта",ul(d.have)) : ""}
+      ${d.toLearn.length ? part("Чему научиться",ul(d.toLearn)) : ""}
+      ${part("С чего начать",`<p>${esc(d.gap)}</p>`)}
+    </div>
+  </details>`;
+}
+
+function result(){
+  const r = computeResult(S.a), first = r.top[0];
+  const list = arr => `<ul>${arr.map(e => `<li>${esc(e.s)}</li>`).join("")}</ul>`;
+  const tag = (t,sub,arr,w) => arr.length ? `<div class="tag${w ? " w" : ""}"><h3>${t}</h3><p>${sub}</p>${list(arr)}</div>` : "";
+  const tags = tag("Главное в резюме","Получается и нравится. Ставь это в первые строки.",r.groups.core)
+    + tag("Осторожно","Получается, но утомляет. Сюда будут звать чаще всего, потому что ты это умеешь.",r.groups.trap,true)
+    + tag("Куда расти","Нравится, но пока мало опыта. Сюда стоит вкладывать время.",r.groups.grow);
+
+  show(`<div class="result">
+    <div class="hero">
+      <p class="label">Начни отсюда</p>
+      <h1 class="focus-target" tabindex="-1">${esc(first.t)}</h1>
+      <p>Тебе ближе всего: ${esc(r.types[0])}, ${esc(r.types[1])}.</p>
+    </div>
+    <div class="block">
+      <h2>Что искать</h2>
+      <p class="lead">Три направления по твоим ответам. Нажми на запрос, и откроются вакансии в Москве.</p>
+      ${r.top.map(dirCard).join("")}
+    </div>
+    ${tags ? `<div class="block"><h2>Твой опыт</h2><div class="tags">${tags}</div></div>` : ""}
+    ${r.anti.length ? `<div class="block"><h2>Какие вакансии пропускать</h2>
+      <p class="lead">Увидела это в описании вакансии — не трать время на отклик.</p>
+      <ul style="padding-left:20px;display:grid;gap:4px">${r.anti.map(k => `<li>${esc(ANTI[k].t)}</li>`).join("")}</ul>
+      ${r.anti.includes("sales") ? `<p class="lead">${esc(ANTI.sales.w)}</p>` : ""}</div>` : ""}
+    <div class="block">
+      <h2>На этой неделе</h2>
+      <ol class="steps">
+        <li>Открой до 10 вакансий по запросу «${esc(first.q[0])}».</li>
+        <li>Выпиши, какие требования повторяются и какие зарплаты указаны.</li>
+        <li>Поправь резюме под это направление: поставь наверх то, что получается и нравится.</li>
+        <li>${first.speed === 2 ? "Выбери курс по SQL и пройди первый урок. Откликаться начнёшь после него." : "Отправь пять откликов. Первые два туда, куда не очень хочется: это тренировка."}</li>
+      </ol>
+    </div>
+    <div class="actions">
+      <button class="primary" data-act="share">Отправить результат</button>
+      <button class="ghost" data-act="edit">Изменить ответы</button>
+      <button class="ghost" data-act="reset">Пройти заново</button>
+    </div>
+    <textarea class="out" id="out" readonly hidden aria-label="Текст результата"></textarea>
+    <p class="foot">Это подсказка, с чего начать поиск. Если вакансии первого направления кажутся скучными, переходи ко второму.</p>
+  </div>`);
+}
+
+async function share(btn){
+  const text = buildReport(computeResult(S.a));
+  if(navigator.share){
+    try{await navigator.share({text});return;}
+    catch(e){if(e.name === "AbortError") return;}
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    btn.textContent = "Скопировано, вставь в чат";
+  }catch(e){
+    const out = document.getElementById("out");
+    out.value = text;
+    out.hidden = false;
+    out.focus();
+    out.select();
+    btn.textContent = "Выдели текст ниже и скопируй";
+  }
+}
+
+function route(){
+  if(S.i < 0) intro();
+  else if(S.i >= QUESTIONS.length) result();
+  else question();
+}
+
+app.addEventListener("click",e => {
+  if(performance.now() < lockUntil){e.preventDefault(); e.stopPropagation();}
+},true);
+
+app.addEventListener("click",e => {
+  const b = e.target.closest("button");
+  if(!b) return;
+  if(b.dataset.ans){choose(b,b.dataset.ans);return;}
+  if(b.dataset.anti){toggleAnti(b);return;}
+  const act = b.dataset.act;
+  if(act === "start"){S.i = Math.max(S.i,0); save(); route();}
+  if(act === "back"){S.i = S.i === 0 && S.a.anti ? QUESTIONS.length : S.i - 1; save(); route();}
+  if(act === "skip"){S.i++; save(); route();}
+  if(act === "finish"){S.a.anti = S.a.anti || []; S.i = QUESTIONS.length; save(); route();}
+  if(act === "edit"){S.i = 0; save(); route();}
+  if(act === "share") share(b);
+  if(act === "reset"){
+    const now = performance.now();
+    if(!resetAt){resetAt = now; b.textContent = "Точно? Ответы удалятся. Нажми ещё раз"; return;}
+    if(now - resetAt < 800) return;
+    S = {i:-1,a:{}};
+    save();
+    route();
+  }
+});
+
+route();
+</script>
+</body>
+</html>
