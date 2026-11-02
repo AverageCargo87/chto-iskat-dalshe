@@ -503,7 +503,7 @@ function dirCard(d,i){
       <p>${esc(d.what)}</p>
       ${part("Почему тебе",ul(d.why))}
       ${d.warn.length ? `<div class="warn"><b>На что смотреть.</b> ${esc(d.warn.join(" "))}</div>` : ""}
-      ${part("Смотреть вакансии",`<div class="links">${d.q.map(q => `<a href="${esc(hh(q))}" target="_blank" rel="noopener">${esc(q)}<span>↗</span></a>`).join("")}</div>`)}
+      ${part("Смотреть вакансии",`<div class="links">${d.q.map(q => `<a href="${esc(hh(q))}">${esc(q)}<span>›</span></a>`).join("")}</div>`)}
       ${d.have.length ? part("Что можно показать из твоего опыта",ul(d.have)) : ""}
       ${d.toLearn.length ? part("Чему научиться",ul(d.toLearn)) : ""}
       ${part("С чего начать",`<p>${esc(d.gap)}</p>`)}
@@ -527,7 +527,7 @@ function result(){
     </div>
     <div class="block">
       <h2>Что искать</h2>
-      <p class="lead">Три направления по твоим ответам. Нажми на запрос, и откроются вакансии в Москве.</p>
+      <p class="lead">Три направления по твоим ответам. Нажми на запрос, и откроются вакансии в Москве. Результат сохранится, сюда можно вернуться.</p>
       ${r.top.map(dirCard).join("")}
     </div>
     ${tags ? `<div class="block"><h2>Твой опыт</h2><div class="tags">${tags}</div></div>` : ""}
@@ -606,6 +606,7 @@ app.addEventListener("click",e => {
 });
 
 route();
+lockUntil = 0; // блокировка нужна только между экранами, первое касание после загрузки не теряем
 </script>
 </body>
 </html>
